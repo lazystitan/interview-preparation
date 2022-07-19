@@ -8,11 +8,16 @@
 
 unsigned int VECTOR_SIZE = 100;
 
-std::vector<int> build_random_vector() {
+std::vector<int> build_sorted_vector() {
     std::vector<int> v = {};
     for (int i = 0; i < VECTOR_SIZE; ++i) {
         v.push_back(i);
     }
+    return v;
+}
+
+std::vector<int> build_random_vector() {
+    auto v = build_sorted_vector();
     auto rng = std::mt19937(std::random_device()());
     std::shuffle(v.begin(), v.end(), rng);
     return v;
@@ -20,10 +25,42 @@ std::vector<int> build_random_vector() {
 
 #define quick_return(v) {if ((v).empty() || (v).size() == 1) return;}
 
+int exchange_count = 0;
+int compare_count = 0;
+
 void exchange(std::vector<int> &v, unsigned int i, unsigned int j) {
+    exchange_count++;
     auto temp = v[i];
     v[i] = v[j];
     v[j] = temp;
+}
+
+bool less(int m, int n) {
+    compare_count++;
+    return m < n;
+}
+
+void reset_count() {
+    exchange_count = compare_count = 0;
+}
+
+void show_count() {
+    std::cout << "exchange count: " << exchange_count << std::endl;
+    std::cout << "compare count: " << compare_count << std::endl;
+}
+
+void check_sorted(std::vector<int> &v) {
+    assert(std::is_sorted(v.begin(), v.end()));
+}
+
+void show_reset_count() {
+    show_count();
+    reset_count();
+}
+
+void check_show_reset_count(std::vector<int> &v) {
+    check_sorted(v);
+    show_reset_count();
 }
 
 //选择排序
@@ -34,8 +71,7 @@ void select_sort(std::vector<int> &v) {
     while (index_to_put < v.size()) {
         auto min_value_index = index_to_put;
         for (int i = index_to_put; i < v.size(); i++) {
-            auto value = v[i];
-            if (v[min_value_index] > value) {
+            if (less(v[i], v[min_value_index])) {
                 min_value_index = i;
             }
         }
@@ -48,35 +84,50 @@ void select_sort(std::vector<int> &v) {
 void insert_sort(std::vector<int> &v) {
     quick_return(v);
 
-    auto to_insert = 1;
-    while ( to_insert < v.size() ) {
-        for (int i = 0; i < to_insert; i++) {
-            if (v[to_insert] < v[i]) {
-                auto temp = v[to_insert];
-                for (int j = i; j < to_insert; ++j) {
-                    v[j+1] = v[j];
-                }
-                v[i] = temp;
-                break;
+    for (int i = 0; i < v.size(); ++i) {
+        for (int j = i; j > 0; j--) {
+            if (less(v[j], v[j - 1])) {
+                exchange(v, j, j - 1);
             }
         }
-        to_insert++;
     }
 }
 
 void shell_sort(std::vector<int> &v) {
     quick_return(v);
+}
 
+unsigned int TEST_TIME = 10;
+
+void test_group(void (*f)(std::vector<int> &)) {
+    std::cout << "----ordered vector----" << std::endl;
+    auto v = build_sorted_vector();
+    f(v);
+    check_show_reset_count(v);
+
+    std::cout << "----" << TEST_TIME << " random vector----" << std::endl;
+    for (int i = 0; i < TEST_TIME; ++i) {
+        v = build_random_vector();
+        f(v);
+        check_sorted(v);
+    }
+
+    std::cout << "average exchange count: " << exchange_count / TEST_TIME << std::endl;
+    std::cout << "average compare count: " << compare_count / TEST_TIME << std::endl;
+    reset_count();
+
+
+
+    std::cout << "----reversed vector----" << std::endl;
+    v = build_sorted_vector();
+    std::reverse(v.begin(), v.end());
+    f(v);
+    check_show_reset_count(v);
 
 }
 
 int main() {
-    auto v = build_random_vector();
-    select_sort(v);
-    assert(std::is_sorted(v.begin(), v.end()));
-
-    v = build_random_vector();
-    insert_sort(v);
-    assert(std::is_sorted(v.begin(), v.end()));
+    test_group(select_sort);
+    test_group(insert_sort);
 
 }
