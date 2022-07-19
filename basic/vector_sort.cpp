@@ -5,6 +5,8 @@
 #include <random>
 #include <vector>
 #include <cassert>
+#include <ctime>
+
 
 unsigned int VECTOR_SIZE = 100;
 
@@ -99,22 +101,39 @@ void shell_sort(std::vector<int> &v) {
 
 unsigned int TEST_TIME = 100;
 
+void show_cost(double &cost) {
+    std::cout << "cost time: " << cost << "ms" << std::endl;
+    cost = 0;
+}
+
 void test_group(void (*f)(std::vector<int> &), const std::string &name) {
     std::cout << "**** " << name << " sort ****" << std::endl;
     std::cout << "----ordered vector----" << std::endl;
     auto v = build_sorted_vector();
+
+    auto start = clock();
     f(v);
+    auto end = clock();
+    auto cost = (double(end-start)/CLOCKS_PER_SEC) * 1000;
+
     check_show_reset_count(v);
+    show_cost(cost);
 
     std::cout << "----" << TEST_TIME << " random vector----" << std::endl;
     for (int i = 0; i < TEST_TIME; ++i) {
         v = build_random_vector();
+
+        start = clock();
         f(v);
+        end = clock();
+        cost += (double(end-start)/CLOCKS_PER_SEC) * 1000;
+
         check_sorted(v);
     }
 
     std::cout << "average exchange count: " << exchange_count / (double) TEST_TIME << std::endl;
     std::cout << "average compare count: " << compare_count /  (double) TEST_TIME << std::endl;
+    show_cost(cost);
     reset_count();
 
 
@@ -122,8 +141,14 @@ void test_group(void (*f)(std::vector<int> &), const std::string &name) {
     std::cout << "----reversed vector----" << std::endl;
     v = build_sorted_vector();
     std::reverse(v.begin(), v.end());
+
+    start = clock();
     f(v);
+    end = clock();
+    cost = (double(end-start)/CLOCKS_PER_SEC) * 1000;
+
     check_show_reset_count(v);
+    show_cost(cost);
     std::cout << "*******************" << std::endl;
 }
 
