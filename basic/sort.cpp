@@ -97,9 +97,10 @@ void shell_sort(std::vector<int> &v) {
     quick_return(v);
 }
 
-unsigned int TEST_TIME = 10;
+unsigned int TEST_TIME = 100;
 
-void test_group(void (*f)(std::vector<int> &)) {
+void test_group(void (*f)(std::vector<int> &), const std::string &name) {
+    std::cout << "**** " << name << " sort ****" << std::endl;
     std::cout << "----ordered vector----" << std::endl;
     auto v = build_sorted_vector();
     f(v);
@@ -112,8 +113,8 @@ void test_group(void (*f)(std::vector<int> &)) {
         check_sorted(v);
     }
 
-    std::cout << "average exchange count: " << exchange_count / TEST_TIME << std::endl;
-    std::cout << "average compare count: " << compare_count / TEST_TIME << std::endl;
+    std::cout << "average exchange count: " << exchange_count / (double) TEST_TIME << std::endl;
+    std::cout << "average compare count: " << compare_count /  (double) TEST_TIME << std::endl;
     reset_count();
 
 
@@ -123,11 +124,11 @@ void test_group(void (*f)(std::vector<int> &)) {
     std::reverse(v.begin(), v.end());
     f(v);
     check_show_reset_count(v);
-
+    std::cout << "*******************" << std::endl;
 }
 
 int main() {
-    test_group(select_sort);
-    test_group(insert_sort);
+    test_group(select_sort, std::string("select"));
+    test_group(insert_sort, std::string("insert"));
 
 }
