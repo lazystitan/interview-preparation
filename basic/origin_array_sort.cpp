@@ -9,7 +9,7 @@
 #include <chrono>
 
 
-const unsigned int ARRAY_SIZE = 10000;
+const unsigned int ARRAY_SIZE = 100000;
 const unsigned int TEST_TIME = 10;
 long int exchange_count = 0;
 long int compare_count = 0;
@@ -220,6 +220,29 @@ void merge_sort_recursive(double *v) {
     merge_sort_recursive(v, 0, ARRAY_SIZE - 1, aux);
 }
 
+//归并排序(改良)
+//1. 对较小的数组采用插入排序
+//2. 子数组已经有序时不再进行merge
+//3. 辅助数组和原数组再递归中不断调换角色，减少复制次数
+void merge_sort_recursive_opt(double *v, int low, int high, double *aux) {
+    //TODO
+}
+
+void merge_sort_recursive_opt(double *v) {
+    auto aux = new double[ARRAY_SIZE];
+    merge_sort_recursive_opt(v, 0, ARRAY_SIZE - 1, aux);
+}
+
+//归并排序(非递归，自底向上)
+void merge_sort(double *v) {
+    auto aux = new double[ARRAY_SIZE];
+    for (int sub_array_size = 1; sub_array_size < ARRAY_SIZE; sub_array_size *= 2) {
+        for (int low = 0; low < ARRAY_SIZE - sub_array_size; low += sub_array_size * 2) {
+            merge(v, low, low + sub_array_size - 1, std::min(low + 2 * sub_array_size - 1, (int) ARRAY_SIZE - 1), aux);
+        }
+    }
+}
+
 
 void show_cost(std::chrono::duration<double> &cost) {
     std::cout << "cost time: " << cost.count() << "s" << std::endl;
@@ -284,10 +307,11 @@ void test_group(void (*f)(double *p), const std::string &name, bool single_rando
 }
 
 int main() {
-    test_group(select_sort, std::string("select"));
-    test_group(insert_sort, std::string("insert"));
+//    test_group(select_sort, std::string("select"));
+//    test_group(insert_sort, std::string("insert"));
     test_group(shell_sort, std::string("shell"));
     test_group(merge_sort_recursive, std::string("merge"));
+    test_group(merge_sort, std::string("merge(bottom to up)"));
 
 //    test_group(insert_sort, std::string("fast"), true);
 //    test_group(insert_sort_slow, std::string("slow"), true);
