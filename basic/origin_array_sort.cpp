@@ -9,7 +9,7 @@
 #include <chrono>
 
 
-const unsigned int ARRAY_SIZE = 10;
+const unsigned int ARRAY_SIZE = 10000;
 const unsigned int TEST_TIME = 10;
 long int exchange_count = 0;
 long int compare_count = 0;
@@ -190,7 +190,11 @@ void merge(double *v, int low, int mid, int high, double *aux) {
 
     auto left_p = low, right_p = mid + 1;
     for (int i = low; i <= high; ++i) {
-        if (less(aux[left_p], aux[right_p])) {
+        if (left_p > mid) {
+            v[i] = aux[right_p++];
+        } else if (right_p > high) {
+            v[i] = aux[left_p++];
+        } else if (less(aux[left_p], aux[right_p])) {
             v[i] = aux[left_p++];
         } else {
             v[i] = aux[right_p++];
@@ -203,7 +207,7 @@ void merge_sort_recursive(double *v, int low, int high, double *aux) {
         return;
     }
 
-    auto mid = (low + high) / 2;
+    auto mid = low + (high - low) / 2;
     merge_sort_recursive(v, low, mid, aux);
     merge_sort_recursive(v, mid + 1, high, aux);
     merge(v, low, mid, high, aux);
