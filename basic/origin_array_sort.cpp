@@ -9,7 +9,7 @@
 
 
 const int ARRAY_SIZE = 100000;
-//const unsigned int ARRAY_SIZE = 10;
+//const int ARRAY_SIZE = 10;
 const unsigned int TEST_TIME = 10;
 long int exchange_count = 0;
 long int compare_count = 0;
@@ -114,7 +114,7 @@ void insert_sort_slow(double *v) {
 //[low, high)
 void insert_sort(double *v, int low, int high) {
     for (int i = low; i < high; ++i) {
-        for (int j = i; j > 0 && less(v[j], v[j - 1]); j--) {
+        for (int j = i; j > low && less(v[j], v[j - 1]); j--) {
             exchange(v, j, j - 1);
         }
     }
@@ -307,17 +307,28 @@ void quick_sort_recursive_opt(double *v, int low, int high) {
         return;
     }
 
-    auto j = partition(v, low, high);
-    quick_sort_recursive_opt(v, low, j - 1);
-    quick_sort_recursive_opt(v, j + 1, high);
+    auto equal_left = low, to_judge = low + 1, right_to_put_gt = high;
+
+    //三取样
+    while (to_judge <= right_to_put_gt) {
+        if (v[equal_left] > v[to_judge]) {
+            exchange(v, equal_left++, to_judge++);
+        } else if (v[equal_left] < v[to_judge]) {
+            exchange(v, to_judge, right_to_put_gt--);
+        } else {
+            to_judge++;
+        }
+    }
+
+    quick_sort_recursive_opt(v, low, equal_left - 1);
+    quick_sort_recursive_opt(v, right_to_put_gt + 1, high);
 }
 
 //快速排序（优化）
-//TODO 快速排序-三取样
 //TODO 快速排序-熵最优
 void quick_sort_recursive_opt(double *v) {
     shuffle_origin_array(v);
-    quick_sort_recursive(v, 0, ARRAY_SIZE - 1);
+    quick_sort_recursive_opt(v, 0, ARRAY_SIZE - 1);
 }
 
 void show_cost(std::chrono::duration<double> &cost) {
@@ -325,14 +336,14 @@ void show_cost(std::chrono::duration<double> &cost) {
     cost = cost - cost;
 }
 
-void test_group(void (*f)(double *p), const std::string &name, bool single_random = false) {
+void test_group(void (*f)(double *p), const std::string &name, bool only_random = false) {
     using namespace std::chrono;
     std::cout << "**** " << name << " sort ****" << std::endl;
     std::vector<double> v;
     double *arr;
     time_point<steady_clock> start, end;
     duration<double> cost{};
-    if (!single_random) {
+    if (!only_random) {
         std::cout << "----ordered vector----" << std::endl;
         v = build_sorted_vector();
         arr = convert_vector_to_array(v);
@@ -346,7 +357,7 @@ void test_group(void (*f)(double *p), const std::string &name, bool single_rando
         show_cost(cost);
     }
 
-    std::cout << "----" << (single_random ? 1 : TEST_TIME) << " random vector----" << std::endl;
+    std::cout << "----" << TEST_TIME << " random vector----" << std::endl;
     for (int i = 0; i < TEST_TIME; ++i) {
         v = build_random_vector();
         arr = convert_vector_to_array(v);
@@ -365,7 +376,7 @@ void test_group(void (*f)(double *p), const std::string &name, bool single_rando
     reset_count();
 
 
-    if (!single_random) {
+    if (!only_random) {
         std::cout << "----reversed vector----" << std::endl;
         v = build_sorted_vector();
         std::reverse(v.begin(), v.end());
@@ -384,10 +395,10 @@ void test_group(void (*f)(double *p), const std::string &name, bool single_rando
 
 int main() {
 //    test_group(select_sort, std::string("select"));
-//    test_group(insert_sort, std::string("insert"));
-//    test_group(shell_sort, std::string("shell"));
-//    test_group(merge_sort_recursive, std::string("merge"));
-//    test_group(merge_sort, std::string("merge(bottom to up)"));
+    test_group(insert_sort, std::string("insert"));
+    test_group(shell_sort, std::string("shell"));
+    test_group(merge_sort_recursive, std::string("merge"));
+    test_group(merge_sort, std::string("merge(bottom to up)"));
     test_group(quick_sort_recursive, std::string("quick"));
     test_group(quick_sort_recursive_opt, std::string("opt quick"));
 
