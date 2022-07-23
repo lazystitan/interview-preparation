@@ -309,7 +309,7 @@ void quick_sort_recursive_opt(double *v, int low, int high) {
 
     auto equal_left = low, to_judge = low + 1, right_to_put_gt = high;
 
-    //三取样
+    //熵最优-三切分
     while (to_judge <= right_to_put_gt) {
         if (v[equal_left] > v[to_judge]) {
             exchange(v, equal_left++, to_judge++);
@@ -325,7 +325,7 @@ void quick_sort_recursive_opt(double *v, int low, int high) {
 }
 
 //快速排序（优化）
-//TODO 快速排序-熵最优
+//TODO 快速排序-三取样
 void quick_sort_recursive_opt(double *v) {
     shuffle_origin_array(v);
     quick_sort_recursive_opt(v, 0, ARRAY_SIZE - 1);
@@ -395,7 +395,7 @@ void test_group(void (*f)(double *p), const std::string &name, bool only_random 
 
 int main() {
 //    test_group(select_sort, std::string("select"));
-    test_group(insert_sort, std::string("insert"));
+//    test_group(insert_sort, std::string("insert"));
     test_group(shell_sort, std::string("shell"));
     test_group(merge_sort_recursive, std::string("merge"));
     test_group(merge_sort, std::string("merge(bottom to up)"));
