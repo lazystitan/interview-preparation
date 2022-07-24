@@ -8,7 +8,7 @@
 #include <chrono>
 
 
-const int ARRAY_SIZE = 100000;
+const int ARRAY_SIZE = 50;
 //const int ARRAY_SIZE = 10;
 const unsigned int TEST_TIME = 10;
 long int exchange_count = 0;
@@ -39,14 +39,16 @@ double* convert_vector_to_array(std::vector<double> &v) {
     return arr;
 }
 
-void exchange(double *v, unsigned int i, unsigned int j) {
+template <typename T>
+void exchange(T *v, unsigned int i, unsigned int j) {
     exchange_count++;
     auto temp = v[i];
     v[i] = v[j];
     v[j] = temp;
 }
 
-bool less(double m, double n) {
+template <typename T>
+bool less(T m, T n) {
     compare_count++;
     return m < n;
 }
@@ -336,6 +338,77 @@ void show_cost(std::chrono::duration<double> &cost) {
     cost = cost - cost;
 }
 
+template <typename T>
+class MaxPriorQueue {
+private:
+    T* _pq;
+    int _pq_max = 0, _size = 0;
+    void swim(int k) {
+        while (k > 1 && less(_pq[k/2], _pq[k])) {
+            exchange(_pq, k/2, k);
+            k /= 2;
+        }
+    }
+
+    void sink(int k) {
+        while (2 * k <= _size) {
+            auto j = 2 * k;
+            if (j < _size && less(_pq[j], _pq[j + 1]))
+                j++;
+            if (!less(_pq[k], _pq[j])) break;
+            exchange(_pq, k, j);
+            k = j;
+        }
+    }
+
+public:
+    explicit MaxPriorQueue(int max) {
+        _pq_max = max;
+        _pq = new T[max + 1];
+    }
+
+    bool is_empty() {
+        return _size == 0;
+    }
+
+    int size() {
+        return _size;
+    }
+
+    void insert(T v) {
+        _pq[++_size] = v;
+        swim(_size);
+    }
+
+    T delete_max() {
+        auto max = _pq[1];
+        exchange(_pq, 1, _size--);
+        sink(1);
+        return max;
+    }
+
+
+};
+
+void test_queue() {
+    auto v = build_random_vector();
+    auto q = MaxPriorQueue<double>(ARRAY_SIZE);
+    for (auto t: v) {
+        q.insert(t);
+        if (q.size() >= 10) {
+            q.delete_max();
+        }
+    }
+
+    while (!q.is_empty()) {
+        std::cout << q.delete_max() << ", ";
+    }
+    std::cout << std::endl;
+
+    show_reset_count();
+
+}
+
 void test_group(void (*f)(double *p), const std::string &name, bool only_random = false) {
     using namespace std::chrono;
     std::cout << "**** " << name << " sort ****" << std::endl;
@@ -401,6 +474,8 @@ int main() {
     test_group(merge_sort, std::string("merge(bottom to up)"));
     test_group(quick_sort_recursive, std::string("quick"));
     test_group(quick_sort_recursive_opt, std::string("opt quick"));
+
+    test_queue();
 
 //    test_group(insert_sort, std::string("fast"), true);
 //    test_group(insert_sort_slow, std::string("slow"), true);
