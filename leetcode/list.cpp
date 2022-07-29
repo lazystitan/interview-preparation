@@ -10,7 +10,8 @@
 #include <iostream>
 #include <queue>
 
-using namespace std;
+#include "../basic/origin_array_sort.h"
+#include "test_constants.h"
 
 /**
  * Definition for singly-linked list.
@@ -29,6 +30,7 @@ struct ListNode {
 
 class Solution {
 public:
+    //判断链表是否有环
     bool hasCycle(ListNode *head) {
         if (head == nullptr || head->next == nullptr) {
             return false;
@@ -49,6 +51,7 @@ public:
         }
     }
 
+    //是否能从字典中拼接出目标字符串，可重复
     bool wordBreak(std::string s, std::vector<std::string> &wordDict) {
         auto wordDictSet = std::unordered_set<std::string>();
         for (auto w: wordDict) {
@@ -69,11 +72,13 @@ public:
         return dp[s.size()];
     }
 
+    //找出只出现一次的数字
     int singleNumber(std::vector<int> &nums) {
 
 
     }
 
+    //打乱数组
     std::vector<int> shuffle(std::vector<int> origin_nums) {
         auto v = std::vector<int>(origin_nums);
         std::default_random_engine e(static_cast<unsigned int>(time(nullptr)));
@@ -90,6 +95,7 @@ public:
         return v;
     }
 
+    //特殊矩阵中查找
     bool searchMatrix(std::vector<std::vector<int>> &matrix, int target) {
         if (matrix.size() == 0) {
             return false;
@@ -109,19 +115,47 @@ public:
         return false;
     }
 
-    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+    //滑动窗口的最大序列
+    std::vector<int> maxSlidingWindow(std::vector<int>& nums, int k) {
+        auto q = IndexedPriorityQueue<int>(nums.size());
+        q.find_by_value();
+        auto r = std::vector<int>();
+        for (int i = 0; i < k; ++i) {
+            q.insert(i, nums[i]);
+        }
 
+        auto earliest = 0, next_add = k;
+        while (next_add < nums.size()) {
+            r.push_back(q.min());
+            q.deleteByIndex(earliest);
+            q.insert(next_add, nums[next_add]);
+            earliest++;
+            next_add++;
+        }
+        r.push_back(q.min());
+        return r;
+    }
+
+    std::vector<int> leetCodeMaxSlidingWindow(std::vector<int>& nums, int k) {
+        int n = nums.size();
+        std::priority_queue<std::pair<int, int>> q;
+        for (int i = 0; i < k; ++i) {
+            q.emplace(nums[i], i);
+        }
+        std::vector<int> ans = {q.top().first};
+        for (int i = k; i < n; ++i) {
+            q.emplace(nums[i], i);
+            while (q.top().second <= i - k) {
+                q.pop();
+            }
+            ans.push_back(q.top().first);
+        }
+        return ans;
     }
 };
 
-class IndexedPriorityQueue {
-    vector<int> _v;
-    vector<int> _index_map;
-
-};
-
 class MedianFinder {
-    vector<int> nums;
+    std::vector<int> nums;
 
 public:
     MedianFinder() = default;
@@ -143,6 +177,7 @@ public:
 
 
 int main() {
+    using namespace std;
     int l_value[28] = {-21, 10, 17, 8, 4, 26, 5, 35, 33, -7, -16, 27, -12,
                        6, 29, -12, 5, 9, 20, 14, 14, 2, 13, -24, 21, 23, -21, 5};
 
@@ -184,4 +219,34 @@ int main() {
     cout << finder.findMedian() << endl;
     finder.addNum(4);
     cout << finder.findMedian() << endl;
+
+    auto nums = vector<int> {1,3,-1,-3,5,3,6,7};
+    auto k = 3;
+
+    nums = vector<int>();
+    for (auto i : INPUT) {
+        nums.push_back(i);
+    }
+
+    k = WINDOW_SIZE;
+
+    cout << nums.size() << endl;
+
+    auto r = s->maxSlidingWindow(nums, k);
+    cout << r.size() << endl;
+
+
+    auto r2 = s->leetCodeMaxSlidingWindow(nums, k);
+    cout << r2.size() << endl;
+
+    for (int i = 0; i < r.size(); ++i) {
+        if (r[i] != r2[i]) {
+            cout << i << " : " << r[i] << "!=" << r2[i] << endl;
+        }
+    }
+
+//    for (auto i : r) {
+//        cout << i << ", ";
+//    }
+//    cout << endl;
 }

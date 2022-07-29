@@ -6,61 +6,8 @@
 #include <vector>
 #include <cassert>
 #include <chrono>
+#include "origin_array_sort.h"
 
-
-const int ARRAY_SIZE = 50;
-//const int ARRAY_SIZE = 10;
-const unsigned int TEST_TIME = 10;
-long int exchange_count = 0;
-long int compare_count = 0;
-
-std::vector<double> build_sorted_vector() {
-    std::vector<double> v = {};
-    for (int i = 0; i < ARRAY_SIZE; ++i) {
-        v.push_back(i);
-    }
-    return v;
-}
-
-std::vector<double> build_random_vector() {
-    auto v = build_sorted_vector();
-    auto rng = std::mt19937(std::random_device()());
-    std::shuffle(v.begin(), v.end(), rng);
-    return v;
-}
-
-double* convert_vector_to_array(std::vector<double> &v) {
-    auto arr = new double[ARRAY_SIZE];
-    auto index = 0;
-    for (auto i: v) {
-        arr[index] = i;
-        index++;
-    }
-    return arr;
-}
-
-template <typename T>
-void exchange(T *v, unsigned int i, unsigned int j) {
-    exchange_count++;
-    auto temp = v[i];
-    v[i] = v[j];
-    v[j] = temp;
-}
-
-template <typename T>
-bool less(T m, T n) {
-    compare_count++;
-    return m < n;
-}
-
-void reset_count() {
-    exchange_count = compare_count = 0;
-}
-
-void show_count() {
-    std::cout << "exchange count: " << exchange_count << std::endl;
-    std::cout << "compare count: " << compare_count << std::endl;
-}
 
 std::vector<double> convert_array_to_vector(double *arr) {
     auto v = std::vector<double>();
@@ -126,6 +73,7 @@ void insert_sort(double *v, int low, int high) {
 void insert_sort(double *v) {
     insert_sort(v, 0, ARRAY_SIZE);
 }
+
 //  init                2,| 9, 7, 3, 8, 4, 5, 6, 0, 1
 //  compare 9 and 2     2, 9,| 7, 3, 8, 4, 5, 6, 0, 1
 //  compare 7 and 9     2, 7, 9,| 3, 8, 4, 5, 6, 0, 1
@@ -142,7 +90,7 @@ void insert_sort_test() {
 
     for (int i = 0; i < size; ++i) {
         int j = i;
-        while(true) {
+        while (true) {
             if (!(j > 0)) { break; } //middle condition
             if (!less(v1[j], v1[j - 1])) { break; } //middle condition
             exchange(v1, j, j - 1);
@@ -155,7 +103,7 @@ void insert_sort_test() {
     double v2[size] = {2, 9, 7, 3, 8, 4, 5, 6, 0, 1};
     for (int i = 0; i < size; ++i) {
         int j = i;
-        while(true) {
+        while (true) {
             if (!(j > 0)) { break; } //middle condition
             if (!less(v2[j], v2[j - 1])) {
 
@@ -288,7 +236,7 @@ void shuffle_origin_array(double *v) {
 
     auto left_size = ARRAY_SIZE;
     for (int i = ARRAY_SIZE - 1; i >= 0; --i) {
-        std::uniform_int_distribution<unsigned> u(0,  left_size);
+        std::uniform_int_distribution<unsigned> u(0, left_size);
         auto rand_number = u(engine);
         auto p = rand_number % left_size;
         exchange(v, i, p);
@@ -338,14 +286,16 @@ void show_cost(std::chrono::duration<double> &cost) {
     cost = cost - cost;
 }
 
-template <typename T>
+//优先队列（堆）
+template<typename T>
 class MaxPriorQueue {
 private:
-    T* _pq;
+    T *_pq; //完全二叉树
     int _pq_max = 0, _size = 0;
+
     void swim(int k) {
-        while (k > 1 && less(_pq[k/2], _pq[k])) {
-            exchange(_pq, k/2, k);
+        while (k > 1 && less(_pq[k / 2], _pq[k])) {
+            exchange(_pq, k / 2, k);
             k /= 2;
         }
     }
@@ -386,8 +336,6 @@ public:
         sink(1);
         return max;
     }
-
-
 };
 
 void test_queue() {
@@ -409,6 +357,60 @@ void test_queue() {
 
 }
 
+void sink(double *heap, int i, int heap_size) {
+    while (2 * i <= heap_size) {
+        auto left_child_index = i * 2, right_child_index = i * 2 + 1, min_child_index = left_child_index;
+        if (right_child_index <= heap_size && less(heap[left_child_index], heap[right_child_index])) {
+            min_child_index = right_child_index;
+        }
+
+        if (less(heap[i], heap[min_child_index])) {
+            exchange(heap, i, min_child_index);
+        } else {
+            break;
+        }
+
+        i = min_child_index;
+    }
+}
+
+//堆排序
+void heap_sort(double *v) {
+    auto *heap = new double[ARRAY_SIZE + 1];
+    for (int i = 0; i < ARRAY_SIZE; ++i) {
+        heap[i + 1] = v[i];
+    }
+
+    auto length = ARRAY_SIZE;
+    for (int i = ARRAY_SIZE / 2; i > 0; --i) {
+        sink(heap, i, length);
+    }
+
+    while (length > 0) {
+        exchange(heap, 1, length--);
+        sink(heap, 1, length);
+    }
+
+    for (int i = 1; i <= ARRAY_SIZE; ++i) {
+        v[i - 1] = heap[i];
+    }
+
+    delete[] heap;
+}
+
+void indexed_priority_queue_sort(double *v) {
+    auto q = IndexedPriorityQueue<double>(ARRAY_SIZE);
+
+    for (int i = 0; i < ARRAY_SIZE; ++i) {
+        q.insert(i, v[i]);
+    }
+
+    for (int i = ARRAY_SIZE - 1; i >= 0; --i) {
+        v[i] = q.min();
+        q.delMin();
+    }
+}
+
 void test_group(void (*f)(double *p), const std::string &name, bool only_random = false) {
     using namespace std::chrono;
     std::cout << "**** " << name << " sort ****" << std::endl;
@@ -424,7 +426,7 @@ void test_group(void (*f)(double *p), const std::string &name, bool only_random 
         start = steady_clock::now();
         f(arr);
         end = steady_clock::now();
-         cost = duration_cast<duration<double>>(end - start);
+        cost = duration_cast<duration<double>>(end - start);
 
         check_show_reset_count(arr);
         show_cost(cost);
@@ -474,8 +476,9 @@ int main() {
     test_group(merge_sort, std::string("merge(bottom to up)"));
     test_group(quick_sort_recursive, std::string("quick"));
     test_group(quick_sort_recursive_opt, std::string("opt quick"));
-
+    test_group(heap_sort, std::string("heap"));
     test_queue();
+    test_group(indexed_priority_queue_sort, std::string("indexed priority queue"));
 
 //    test_group(insert_sort, std::string("fast"), true);
 //    test_group(insert_sort_slow, std::string("slow"), true);

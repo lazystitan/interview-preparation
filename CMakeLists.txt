@@ -6,5 +6,5 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 
-add_executable(sort basic/origin_array_sort.cpp)
-add_executable(list leetcode/list.cpp)
+add_executable(sort basic/origin_array_sort.cpp basic/origin_array_sort.h)
+add_executable(list leetcode/list.cpp leetcode/test_constants.h)
