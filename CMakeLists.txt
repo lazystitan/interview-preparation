@@ -8,3 +8,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 add_executable(sort basic/origin_array_sort.cpp basic/origin_array_sort.h)
 add_executable(list leetcode/list.cpp leetcode/test_constants.h)
+add_executable(search basic/search.cpp)

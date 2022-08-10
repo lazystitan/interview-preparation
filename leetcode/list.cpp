@@ -222,28 +222,22 @@ int main() {
 
     auto nums = vector<int> {1,3,-1,-3,5,3,6,7};
     auto k = 3;
-
-    nums = vector<int>();
-    for (auto i : INPUT) {
-        nums.push_back(i);
-    }
-
-    k = WINDOW_SIZE;
-
-    cout << nums.size() << endl;
-
-    auto r = s->maxSlidingWindow(nums, k);
-    cout << r.size() << endl;
+//
+//    nums = vector<int>();
+//    for (auto i : INPUT) {
+//        nums.push_back(i);
+//    }
+//
+//    k = WINDOW_SIZE;
+//
+//    cout << nums.size() << endl;
+//
+//    auto r = s->maxSlidingWindow(nums, k);
+//    cout << r.size() << endl;
 
 
     auto r2 = s->leetCodeMaxSlidingWindow(nums, k);
     cout << r2.size() << endl;
-
-    for (int i = 0; i < r.size(); ++i) {
-        if (r[i] != r2[i]) {
-            cout << i << " : " << r[i] << "!=" << r2[i] << endl;
-        }
-    }
 
 //    for (auto i : r) {
 //        cout << i << ", ";
