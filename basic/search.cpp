@@ -323,8 +323,8 @@ private:
     void keys(std::vector<Key> &r, Node *n) {
         if (n == nullptr) return;
         keys(r, n->left);
-        keys(r, n->right);
         r.push_back(n->key);
+        keys(r, n->right);
     }
 
 public:
@@ -357,6 +357,141 @@ public:
     }
 };
 
+
+
+template<typename Key, typename Value>
+class RedBlackTree : public SymbolTable<Key, Value> {
+private:
+    enum Color {
+        Red, Black
+    };
+    class Node {
+    public:
+        Key key;
+        Value value;
+        Color color;
+        Node *left = nullptr, *right = nullptr;
+        int N;
+        Node(Key key, Value value, int N, Color c) : key(key), value(value), N(N), color(c) {};
+    };
+    Node *root = nullptr;
+
+    bool isRed(Node *node) {
+        if (node == nullptr) {
+            return false;
+        }
+        return node->color == Red;
+    }
+
+    int size(Node *n) {
+        if (n == nullptr) {
+            return 0;
+        }
+        return n->N;
+    }
+
+    Node* rotateLeft(Node *node) {
+        auto r = node->right;
+        node->right = r->left;
+        r->left = node;
+        r->color = node->color;
+        node->color = Red;
+        r->N = node->N;
+        node->N = 1 + size(node->left) + size(node->right);
+        return r;
+    }
+
+    Node* rotateRight(Node *node) {
+        auto r = node->left;
+        node->left = r->right;
+        r->right = node;
+        r->color = node->color;
+        node->color = Red;
+        r->N = node->N;
+        node->N = 1 + size(node->left) + size(node->right);
+        return r;
+    }
+
+    void flipColors(Node *node) {
+        node->color = Red;
+        node->left->color = Black;
+        node->right->color = Black;
+    }
+
+    Node* put(Node *node, Key key, Value value) {
+        if (node == nullptr) {
+            return new Node(key, value, 1, Red);
+        }
+
+        if (key < node->key) {
+            node->left = put(node->left, key, value);
+        } else if (key == node->key) {
+            node->value = value;
+        } else {
+            node->right = put(node->right, key, value);
+        }
+
+        if (isRed(node->left) && node->left != nullptr && isRed(node->left->left)) {
+            node = rotateRight(node);
+        } else if (isRed(node->left) && isRed(node->right)) {
+            flipColors(node);
+        } else if (!isRed(node->left) && isRed(node->right)) {
+            node = rotateLeft(node);
+        }
+
+        node->N = 1 + size(node->left) + size(node->right);
+        return node;
+    }
+
+    std::optional<Value> get(Node *n, Key key) {
+        if (n == nullptr) {
+            return std::optional<Value>();
+        }
+        if (key > n->key) {
+            return get(n->right, key);
+        } else if (key == n->key) {
+            return std::optional<Value>(n->value);
+        } else {
+            return get(n->left, key);
+        }
+    }
+
+public:
+    int size() override {
+        if (root == nullptr) {
+            return 0;
+        }
+        return size(root);
+    }
+
+    void put(Key key, Value value) {
+        root = put(root, key, value);
+        root->color = Black;
+    }
+
+    std::optional<Value> get(Key key) override {
+        return get(root, key);
+    }
+
+    bool empty() override {
+        return size() == 0;
+    }
+
+    void keys(std::vector<Key> &r, Node *n) {
+        if (n == nullptr) return;
+        keys(r, n->left);
+        r.push_back(n->key);
+        keys(r, n->right);
+    }
+
+    std::vector<Key> keys() override {
+        auto r = std::vector<Key>();
+        keys(r, root);
+        return r;
+    }
+
+};
+
 int main() {
     using namespace std;
 // very slow
@@ -368,5 +503,8 @@ int main() {
 
     auto bst = BinarySearchTree<string, int>();
     read_test_file(&bst);
+
+    auto rbt = RedBlackTree<string, int>();
+    read_test_file(&rbt);
 
 }
