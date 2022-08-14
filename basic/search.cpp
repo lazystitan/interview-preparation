@@ -42,7 +42,7 @@ private:
     };
     Node *first = nullptr;
 public:
-    std::optional<Value> get(Key key) {
+    std::optional<Value> get(Key key) override {
         auto p = first;
         while (p != nullptr) {
             if (p->key == key) {
@@ -151,11 +151,11 @@ public:
 //        pairs = std::vector<std::pair<Key, Value>>(capacity);
 //    }
 
-    int size() {
+    int size() override {
         return pairs.size();
     }
 
-    std::optional<Value> get(Key key) {
+    std::optional<Value> get(Key key) override {
         if (pairs.empty()) {
             return std::optional<Value>();
         }
@@ -182,7 +182,7 @@ public:
         return low;
     }
 
-    void put(Key key, Value value) {
+    void put(Key key, Value value) override {
         auto i = rank(key);
 
         if (i < pairs.size() && pairs[i].first == key) {
@@ -226,12 +226,12 @@ public:
         return std::optional<Key>(pairs[k].first);
     }
 
-    bool contains(Key key) {
+    bool contains(Key key) override {
         auto r = get(key);
         return r.has_value();
     }
 
-    std::vector<Key> keys() {
+    std::vector<Key> keys() override {
         auto r = std::vector<Key>();
         auto low_i = 0, high_i = (int) pairs.size();
         for (int i = low_i; i < high_i; ++i) {
@@ -252,20 +252,121 @@ public:
         return r;
     }
 
-    bool empty() {
+    bool empty() override {
         return pairs.empty();
     }
 
 };
 
+template <typename Key, typename Value>
+class BinarySearchTree : public SymbolTable<Key, Value> {
+private:
+    class Node {
+    public:
+        Key key;
+        Value value;
+        Node *left = nullptr, *right = nullptr;
+        int N;
+        Node(Key key, Value value, int N) : key(key), value(value), N(N) {}
+    };
+    Node *root = nullptr;
+    int size(Node *n) {
+        if (n == nullptr) {
+            return 0;
+        }
+        return n->N;
+    }
+
+    std::optional<Value> get(Node *n, Key key) {
+        if (n == nullptr) {
+            return std::optional<Value>();
+        }
+        if (key > n->key) {
+            return get(n->right, key);
+        } else if (key == n->key) {
+            return std::optional<Value>(n->value);
+        } else {
+            return get(n->left, key);
+        }
+    }
+
+    Node* put(Node *n, Key key, Value value) {
+        if (n == nullptr) {
+            return new Node(key, value, 1);
+        }
+
+        if (key > n->key) {
+            n->right = put(n->right, key, value);
+        } else if (key == n->key) {
+            n->value = value;
+        } else {
+            n->left = put(n->left, key, value);
+        }
+        n->N = size(n->left) + size(n->right) + 1;
+        return n;
+    }
+
+    void free(Node *n) {
+        if (n == nullptr) {
+            return;
+        }
+        free(n->left);
+        if (n->left != nullptr)
+            delete n->left;
+
+        free(n->right);
+        if (n->right != nullptr)
+            delete n->right;
+    }
+
+
+    void keys(std::vector<Key> &r, Node *n) {
+        if (n == nullptr) return;
+        keys(r, n->left);
+        keys(r, n->right);
+        r.push_back(n->key);
+    }
+
+public:
+    int size() override {
+        if (root == nullptr) {
+            return 0;
+        }
+        return size(root);
+    }
+
+    std::optional<Value> get(Key key) override {
+        return get(root, key);
+    }
+
+    void put(Key key, Value value) override {
+        root = put(root, key, value);
+    }
+
+    bool empty() override {
+        return size() == 0;
+    }
+
+    std::vector<Key> keys() override {
+        auto r = std::vector<Key>();
+        keys(r, root);
+        return r;
+    }
+    ~BinarySearchTree() {
+        free(root);
+    }
+};
+
 int main() {
     using namespace std;
+// very slow
 //    auto *sst = new SequentialSearchSymbolTable<string, int>();
 //    read_test_file(sst);
-//    delete sst;
 
-    auto *bst = new BinarySearchSymbolTable<string, int>();
-    read_test_file(bst);
-    delete bst;
+    auto bsst = BinarySearchSymbolTable<string, int>();
+    read_test_file(&bsst);
+
+    auto bst = BinarySearchTree<string, int>();
+    read_test_file(&bst);
 
 }
