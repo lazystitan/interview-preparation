@@ -15,7 +15,7 @@ public:
 
     virtual void put(Key key, Value value) = 0;
 
-//    virtual void deleteItem(Key key) = 0;
+    virtual void deleteItem(Key key) = 0;
 
     virtual bool contains(Key key) {
         auto r = get(key);
@@ -53,7 +53,7 @@ public:
         return std::optional<Value>();
     }
 
-    void put(Key key, Value value) {
+    void put(Key key, Value value) override {
         auto p = first;
         while (p != nullptr) {
             if (p->key == key) {
@@ -65,7 +65,7 @@ public:
         first = new Node(key, value, first);
     }
 
-    bool contains(Key key) {
+    bool contains(Key key) override {
         auto p = first;
         while (p != nullptr) {
             if (p->key == key)
@@ -75,7 +75,7 @@ public:
         return false;
     }
 
-    std::vector<Key> keys() {
+    std::vector<Key> keys() override {
         auto r = std::vector<Key>();
         auto p = first;
         while (p != nullptr) {
@@ -85,11 +85,11 @@ public:
         return r;
     }
 
-    bool empty() {
+    bool empty() override {
         return first == nullptr;
     }
 
-    int size() {
+    int size() override {
         auto len = 0;
         auto p = first;
         while (p != nullptr) {
@@ -97,6 +97,24 @@ public:
             p = p->next;
         }
         return len;
+    }
+
+    void deleteItem(Key key) override {
+        if (first == nullptr) return;
+        if (first->next == nullptr && first->key == key) {
+            delete first;
+            first = nullptr;
+        }
+
+        auto p = first->next;
+        while (p->next != nullptr) {
+            if (p->next->key == key) {
+                auto temp = p->next;
+                p->next = p->next->next;
+                delete temp;
+            }
+            p = p->next;
+        }
     }
 };
 
@@ -139,6 +157,14 @@ void read_test_file(SymbolTable<std::string, int> *st) {
         }
     }
 
+    cout << max << " " << st->get(max).value() << endl;
+
+    st->deleteItem(max);
+    for (const auto& key: keys) {
+        if (st->get(key) > st->get(max)) {
+            max = key;
+        }
+    }
     cout << max << " " << st->get(max).value() << endl;
 }
 
@@ -198,7 +224,7 @@ public:
         }
     }
 
-    void deleteItem(Key key) {
+    void deleteItem(Key key) override {
         auto i = rank(key);
         for (int j = pairs.size() - 1; j > i; j--) {
             pairs[j - 1] = pairs[j];
@@ -277,14 +303,14 @@ private:
         return n->N;
     }
 
-    std::optional<Value> get(Node *n, Key key) {
+    Node* get(Node *n, Key key) {
         if (n == nullptr) {
-            return std::optional<Value>();
+            return n;
         }
         if (key > n->key) {
             return get(n->right, key);
         } else if (key == n->key) {
-            return std::optional<Value>(n->value);
+            return n;
         } else {
             return get(n->left, key);
         }
@@ -327,7 +353,57 @@ private:
         keys(r, n->right);
     }
 
+    Node* min(Node *node) {
+        if (node->left == nullptr) {
+            return node;
+        }
+        return min(node->left);
+    }
+
+    Node* deleteMin(Node *node, bool free = false) {
+        if (node->left == nullptr) {
+            auto r = node->right;
+            if (free)  delete node; //free
+            return r;
+        }
+
+        node->left = deleteMin(node->left);
+        node->N = 1 + size(node->left) + size(node->right);
+        return node;
+    }
+
+    Node* deleteItem(Node* node, Key key) {
+        if (node == nullptr) return node;
+        if (key < node->key) {
+            node->left = deleteItem(node->left, key);
+        } else if (key == node->key) {
+            if (node->right == nullptr) {
+                return node->left;
+            }
+            if (node->left == nullptr) {
+                return node->right;
+            }
+            Node *t = node;
+            node = min(t->right);
+            node->right = deleteMin(t->right);
+            node->left = t->left;
+            delete t;
+        } else {
+            node->right = deleteItem(node->right, key);
+        }
+        node->N = 1 + size(node->left) + size(node->right);
+        return node;
+    }
+
 public:
+    void deleteMin() {
+        deleteMin(root, true);
+    }
+
+    void deleteItem(Key key) override {
+        root = deleteItem(root, key);
+    }
+
     int size() override {
         if (root == nullptr) {
             return 0;
@@ -336,7 +412,12 @@ public:
     }
 
     std::optional<Value> get(Key key) override {
-        return get(root, key);
+        auto p = get(root, key);
+        if (p == nullptr) {
+            return std::optional<Value>();
+        } else {
+            return std::optional<Value>(p->value);
+        }
     }
 
     void put(Key key, Value value) override {
@@ -352,6 +433,7 @@ public:
         keys(r, root);
         return r;
     }
+
     ~BinarySearchTree() {
         free(root);
     }
@@ -504,7 +586,7 @@ int main() {
     auto bst = BinarySearchTree<string, int>();
     read_test_file(&bst);
 
-    auto rbt = RedBlackTree<string, int>();
-    read_test_file(&rbt);
+//    auto rbt = RedBlackTree<string, int>();
+//    read_test_file(&rbt);
 
 }
