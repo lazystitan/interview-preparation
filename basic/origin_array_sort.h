@@ -6,7 +6,7 @@
 #define INTERVIEW_PREPARATION_ORIGIN_ARRAY_SORT_H
 
 #include <optional>
-
+#include <algorithm>
 
 
 const int ARRAY_SIZE = 100000;
