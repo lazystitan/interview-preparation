@@ -9,6 +9,7 @@
 #include <random>
 #include <iostream>
 #include <queue>
+#include <unordered_map>
 
 #include "../basic/origin_array_sort.h"
 #include "test_constants.h"
@@ -73,8 +74,46 @@ public:
     }
 
     //找出只出现一次的数字
-    int singleNumber(std::vector<int> &nums) {
+    int singleNumberSlow(std::vector<int> &nums) {
+        auto m = std::unordered_map<int, int>();
+        for (auto v : nums) {
+            if (m.find(v) != m.end()) {
+                m[v]++;
+            } else {
+                m[v] = 1;
+            }
+        }
 
+        for (auto v : m) {
+            if (v.second == 1) {
+                return v.first;
+            }
+        }
+        return 0;
+    }
+
+    int singleNumber(std::vector<int> &nums) {
+        auto r = 0;
+        for (auto v : nums) {
+            r ^= v;
+        }
+        return r;
+    }
+
+    /**
+     * k = 2, f = 4, n = 8
+     * 2, 4, 6 | 5 = 4
+     * 3, 6 | 4, 5 = 4
+     * 4, 8 | 5 = 4
+     *
+     * k = 3, f = 4, n = 9
+     *
+     *
+     * @param k
+     * @param n
+     * @return
+     */
+    int superEggDrop(int k, int n) {
 
     }
 
@@ -244,6 +283,9 @@ int main() {
             cout << i << " : " << r[i] << "!=" << r2[i] << endl;
         }
     }
+
+    nums = vector<int> {4,1,2,1,2};
+    cout << s->singleNumber(nums) << endl;
 
 //    for (auto i : r) {
 //        cout << i << ", ";
